@@ -5,10 +5,10 @@ class Platformer extends Phaser.Scene {
 
     init() {
         // variables and settings
-        this.ACCELERATION = 700;    // Decreased for smoother acceleration
-        this.DRAG = 1800;           // Increased for quicker stops
-        this.physics.world.gravity.y = 1700; // Slightly increased gravity for less floaty jumps
-        this.JUMP_VELOCITY = -950;  // Less tight: higher jump
+        this.ACCELERATION = 500;
+        this.DRAG = 700;    // DRAG < ACCELERATION = icy slide
+        this.physics.world.gravity.y = 1500;
+        this.JUMP_VELOCITY = -900;
     }
 
     create() {
@@ -40,19 +40,13 @@ class Platformer extends Phaser.Scene {
         this.secretLayer.setCollisionByExclusion([-1]);
         // No collision for ladder layer
 
-        // set up player avatar
-        my.sprite.player = this.physics.add.sprite(game.config.width/4, game.config.height/2, "platformer_characters", "tile_0000.png");
+        // set up player avatar using the loaded yellow body image
+        my.sprite.player = this.physics.add.image(game.config.width/4, game.config.height/2, 'character_roundYellow');
         my.sprite.player.setCollideWorldBounds(true);
         my.sprite.player.setOrigin(0.5, 1);
 
-        // Adjust the physics body based on the trimmed sprite data
-        const trimmedWidth = 22;  // From frame.w
-        const trimmedHeight = 24; // From frame.h
-        const offsetX = 1;       // From spriteSourceSize.x
-        const offsetY = 0;       // From spriteSourceSize.y
-
-        my.sprite.player.body.setSize(trimmedWidth, trimmedHeight);
-        my.sprite.player.body.setOffset(offsetX, offsetY);
+        // Optionally adjust body size if needed
+        // my.sprite.player.body.setSize(my.sprite.player.width, my.sprite.player.height);
 
         // Camera follows the player
         this.cameras.main.startFollow(my.sprite.player);
@@ -82,19 +76,13 @@ class Platformer extends Phaser.Scene {
     update() {
         // Left/right movement
         if(cursors.left.isDown) {
-            my.sprite.player.setAccelerationX(-this.ACCELERATION);
-            my.sprite.player.setDragX(0);
-            my.sprite.player.resetFlip();
-            my.sprite.player.anims.play('walk', true);
+            my.sprite.player.setVelocityX(-300);
+            my.sprite.player.setFlipX(true);
         } else if(cursors.right.isDown) {
-            my.sprite.player.setAccelerationX(this.ACCELERATION);
-            my.sprite.player.setDragX(0);
-            my.sprite.player.setFlip(true, false);
-            my.sprite.player.anims.play('walk', true);
+            my.sprite.player.setVelocityX(300);
+            my.sprite.player.setFlipX(false);
         } else {
-            my.sprite.player.setAccelerationX(0);
-            my.sprite.player.setDragX(this.DRAG);
-            my.sprite.player.anims.play('idle');
+            my.sprite.player.setVelocityX(0);
         }
 
         // --- Ladder climbing logic ---
@@ -109,16 +97,13 @@ class Platformer extends Phaser.Scene {
         }
 
         if (onLadder) {
-            // Disable gravity while on ladder
             my.sprite.player.body.allowGravity = false;
             my.sprite.player.setVelocityY(0);
 
             if (cursors.up.isDown) {
                 my.sprite.player.setVelocityY(-150);
-                my.sprite.player.anims.play('idle', true); // Or a climb anim if you have one
             } else if (cursors.down.isDown) {
                 my.sprite.player.setVelocityY(150);
-                my.sprite.player.anims.play('idle', true); // Or a climb anim if you have one
             }
         } else {
             my.sprite.player.body.allowGravity = true;
@@ -126,11 +111,6 @@ class Platformer extends Phaser.Scene {
 
         // Only allow jump if not on ladder
         if (!onLadder) {
-            // player jump
-            // note that we need body.blocked rather than body.touching b/c the former applies to tilemap tiles and the latter to the "ground"
-            if(!my.sprite.player.body.blocked.down) {
-                my.sprite.player.anims.play('jump');
-            }
             if(my.sprite.player.body.blocked.down && Phaser.Input.Keyboard.JustDown(cursors.up)) {
                 my.sprite.player.setVelocityY(this.JUMP_VELOCITY);
             }

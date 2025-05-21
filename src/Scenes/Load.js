@@ -10,8 +10,12 @@ class Load extends Phaser.Scene {
         this.load.atlas("platformer_characters", "tilemap-characters-packed.png", "tilemap-characters-packed.json");
 
         // Load tilemap information
-        this.load.image("tilemap_tiles", "tilemap_packed.png");                         // Packed tilemap
-        this.load.tilemapTiledJSON("platformer-level-1", "platformer-level-1.tmj");   // Tilemap in JSON
+        this.load.image("tilemap_tiles", "kenney_scribble-platformer/Spritesheet/spritesheet_default.png"); // Correct relative path
+        this.load.tilemapTiledJSON("game3_map", "game3_level.json"); // Correct map file
+
+        // Load player body and hand images
+        this.load.image('character_roundYellow', 'kenney_scribble-platformer/PNG/Default/character_roundYellow.png');
+        this.load.image('character_handYellow', 'kenney_scribble-platformer/PNG/Default/character_handYellow.png');
     }
 
     create() {

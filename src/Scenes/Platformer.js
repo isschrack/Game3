@@ -34,6 +34,16 @@ class Platformer extends Phaser.Scene {
         // Import the object layer "Objects"
         this.objectsLayer = this.map.getObjectLayer("Objects");
 
+        // Example: create sprites for each object
+        this.objectsLayer.objects.forEach(obj => {
+            if (obj.name === "heart") {
+                this.add.image(obj.x, obj.y, 'heart_sprite').setOrigin(0, 1);
+            } else if (obj.name === "key_1" || obj.name === "tree_key") {
+                this.add.image(obj.x, obj.y, 'key_sprite').setOrigin(0, 1);
+            }
+            // Add more cases for other object types (spike, door_1, etc.)
+        });
+
         this.secretLayer.setVisible(false);
 
         this.groundLayer.setCollisionByExclusion([-1]);

@@ -36,12 +36,35 @@ class Platformer extends Phaser.Scene {
 
         // Example: create sprites for each object
         this.objectsLayer.objects.forEach(obj => {
-            if (obj.name === "heart") {
-                this.add.image(obj.x, obj.y, 'heart_sprite').setOrigin(0, 1);
-            } else if (obj.name === "key_1" || obj.name === "tree_key") {
-                this.add.image(obj.x, obj.y, 'key_sprite').setOrigin(0, 1);
+            switch(obj.name) {
+                case "heart":
+                    this.add.image(obj.x, obj.y, 'heart_sprite').setOrigin(0, 1);
+                    break;
+                case "key_1":
+                case "tree_key":
+                    this.add.image(obj.x, obj.y, 'key_sprite').setOrigin(0, 1);
+                    break;
+                case "door_1":
+                    this.add.image(obj.x, obj.y, 'door_sprite').setOrigin(0, 1);
+                    break;
+                case "spike":
+                    this.add.image(obj.x, obj.y, 'spike_sprite').setOrigin(0, 1);
+                    break;
+                case "pencil":
+                    this.add.image(obj.x, obj.y, 'pencil_sprite').setOrigin(0, 1);
+                    break;
+                case "special_tree":
+                    this.add.image(obj.x, obj.y, 'special_tree_sprite').setOrigin(0, 1);
+                    break;
+                case "chest":
+                    this.add.image(obj.x, obj.y, 'chest_sprite').setOrigin(0, 1);
+                    break;
+                // Add more cases as needed for new object names
+                default:
+                    // Optionally add a placeholder or skip
+                    // this.add.image(obj.x, obj.y, 'placeholder_sprite').setOrigin(0, 1);
+                    break;
             }
-            // Add more cases for other object types (spike, door_1, etc.)
         });
 
         this.secretLayer.setVisible(false);

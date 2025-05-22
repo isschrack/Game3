@@ -12,6 +12,14 @@ class Load extends Phaser.Scene {
         // Load tilemap information
         this.load.image("tilemap_tiles", "kenney_scribble-platformer/Spritesheet/spritesheet_default.png"); // Correct relative path
         this.load.tilemapTiledJSON("game3_map", "game3_level.json"); // Correct map file
+        
+        // Load object sprites
+        this.load.image('heart_sprite', 'kenney_scribble-platformer/PNG/Default/tile_heart.png');
+        this.load.image('key_sprite', 'kenney_scribble-platformer/PNG/Default/tile_key.png');
+        this.load.image('door_sprite', 'kenney_scribble-platformer/PNG/Default/tile_blockDoor.png');
+        this.load.image('spike_sprite', 'kenney_scribble-platformer/PNG/Default/tile_spikes.png');
+        this.load.image('pencil_sprite', 'kenney_scribble-platformer/PNG/Default/item_pencil.png');
+        this.load.image('chest_sprite', 'kenney_scribble-platformer/PNG/Default/tile_chest.png');
 
         // Load player body and hand images
         this.load.image('character_roundYellow', 'kenney_scribble-platformer/PNG/Default/character_roundYellow.png');

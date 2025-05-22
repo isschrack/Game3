@@ -15,7 +15,7 @@ class Load extends Phaser.Scene {
 
         // Load player body and hand images
         this.load.image('character_roundYellow', 'kenney_scribble-platformer/PNG/Default/character_roundYellow.png');
-        this.load.image('character_handYellow', 'kenney_scribble-platformer/PNG/Default/character_handYellow.png');
+        this.load.image('hand_sprite', 'kenney_scribble-platformer/PNG/Default/character_handYellow.png');
     }
 
     create() {

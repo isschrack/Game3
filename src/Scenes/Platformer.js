@@ -120,6 +120,8 @@ class Platformer extends Phaser.Scene {
             -my.sprite.playerBody.height       // align the bottom
         );
 
+        this.smokeGroup = this.add.group();
+
         // Camera follows the container
         this.cameras.main.startFollow(my.sprite.playerContainer);
 
@@ -142,6 +144,21 @@ class Platformer extends Phaser.Scene {
         this.physics.add.collider(my.sprite.playerContainer, this.doorsGroup, this.tryOpenDoor, null, this);
         // Add collider for chests
         this.physics.add.collider(my.sprite.playerContainer, this.chestsGroup, this.tryOpenChest, null, this);
+
+        // Add overlap for water death
+        this.physics.add.overlap(my.sprite.playerContainer, this.waterLayer, this.playerHitWater, null, this);
+
+        // Add overlap for spikes death (spike objects)
+        this.spikesGroup = this.physics.add.staticGroup();
+
+        this.objectsLayer.objects.forEach(obj => {
+            switch(obj.name) {
+                case "spike":
+                    this.spikesGroup.create(obj.x, obj.y, 'spike_sprite').setOrigin(0, 1);
+                    break;
+            }
+        });
+        this.physics.add.overlap(my.sprite.playerContainer, this.spikesGroup, this.playerHitHazard, null, this);
 
         // Heart icon and counter (replace text with image)
         this.heartIcon = this.add.image(16, 20, 'heart_sprite')
@@ -265,6 +282,28 @@ class Platformer extends Phaser.Scene {
             my.sprite.rightHand.setAlpha(1);
         }
 
+        if (
+            isRunning &&
+            my.sprite.playerContainer.body.blocked.down && // Only emit when on ground
+            this.time.now % 100 < 16
+        ) {
+            const smoke = this.smokeGroup.create(
+                my.sprite.playerContainer.x,
+                my.sprite.playerContainer.y + 10, // slightly below feet
+                'smoke'
+            );
+            smoke.setAlpha(0.7);
+            smoke.setScale(0.18 + Math.random() * 0.07); // Much smaller scale
+            this.tweens.add({
+                targets: smoke,
+                alpha: 0,
+                y: smoke.y + 10, // Less vertical movement for small puffs
+                scale: 0.3,
+                duration: 350,
+                onComplete: () => smoke.destroy()
+            });
+        }
+
         // --- Ladder climbing logic ---
         let onLadder = false;
         if (this.ladderLayer) {
@@ -304,5 +343,33 @@ class Platformer extends Phaser.Scene {
             this.keyIcon.x = this.scale.width - 16;
             this.keyIcon.y = 16;
         }
+    }
+
+    playerHitWater(playerContainer) {
+        // Reset player to last checkpoint
+        if (this.checkpoint && this.checkpoint.x !== null && this.checkpoint.y !== null) {
+            playerContainer.x = this.checkpoint.x;
+            playerContainer.y = this.checkpoint.y;
+            playerContainer.body.setVelocity(0, 0);
+        }
+    }
+
+    playerHitHazard(playerContainer) {
+        // Optional: Play a death animation or sound here
+
+        // Hide the player briefly to simulate "death"
+        playerContainer.visible = false;
+        playerContainer.body.enable = false;
+
+        // After a short delay, reset position and show player again
+        this.time.delayedCall(500, () => {
+            // Reset to fixed coordinates (25, 17)
+            playerContainer.x = 25;
+            playerContainer.y = 17;
+            playerContainer.body.setVelocity(0, 0);
+
+            playerContainer.visible = true;
+            playerContainer.body.enable = true;
+        }, [], this);
     }
 }

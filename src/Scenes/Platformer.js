@@ -9,6 +9,9 @@ class Platformer extends Phaser.Scene {
         this.DRAG = 700;    // DRAG < ACCELERATION = icy slide
         this.physics.world.gravity.y = 1500;
         this.JUMP_VELOCITY = -900;
+
+        this.heartCount = 0; // Heart counter
+        this.hasKey = false; // Track if player has a key
     }
 
     create() {
@@ -27,9 +30,12 @@ class Platformer extends Phaser.Scene {
         this.backgroundLayer = this.map.createLayer("background", this.tileset, 0, 0);
         this.groundLayer = this.map.createLayer("ground+platforms", this.tileset, 0, 0);
         this.waterLayer = this.map.createLayer("water", this.tileset, 0, 0);
-        this.secretLayer = this.map.createLayer("secret", this.tileset, 0, 0);
         // Add ladder layer
         this.ladderLayer = this.map.createLayer("ladder", this.tileset, 0, 0);
+
+        // Create groups for hearts and keys
+        this.heartsGroup = this.physics.add.group();
+        this.keysGroup = this.physics.add.group();
 
         // Import the object layer "Objects"
         this.objectsLayer = this.map.getObjectLayer("Objects");
@@ -38,11 +44,15 @@ class Platformer extends Phaser.Scene {
         this.objectsLayer.objects.forEach(obj => {
             switch(obj.name) {
                 case "heart":
-                    this.add.image(obj.x, obj.y, 'heart_sprite').setOrigin(0, 1);
+                    // Add heart to group for collection
+                    const heart = this.heartsGroup.create(obj.x, obj.y, 'heart_sprite').setOrigin(0, 1);
+                    heart.body.setAllowGravity(false);
                     break;
                 case "key_1":
                 case "tree_key":
-                    this.add.image(obj.x, obj.y, 'key_sprite').setOrigin(0, 1);
+                    // Add key to group for collection
+                    const key = this.keysGroup.create(obj.x, obj.y, 'key_sprite').setOrigin(0, 1);
+                    key.body.setAllowGravity(false);
                     break;
                 case "door_1":
                     this.add.image(obj.x, obj.y, 'door_sprite').setOrigin(0, 1);
@@ -67,12 +77,8 @@ class Platformer extends Phaser.Scene {
             }
         });
 
-        this.secretLayer.setVisible(false);
-
         this.groundLayer.setCollisionByExclusion([-1]);
-        this.secretLayer.setCollisionByExclusion([-1]);
-        // No collision for ladder layer
-
+        
         // set up player avatar using a container
         my.sprite.playerContainer = this.add.container(game.config.width/4, game.config.height/2);
 
@@ -115,7 +121,30 @@ class Platformer extends Phaser.Scene {
         my.sprite.playerContainer.body.setCollideWorldBounds(true);
 
         this.physics.add.collider(my.sprite.playerContainer, this.groundLayer);
-        this.physics.add.collider(my.sprite.playerContainer, this.secretLayer);
+
+        // Add overlap for collecting hearts
+        this.physics.add.overlap(my.sprite.playerContainer, this.heartsGroup, this.collectHeart, null, this);
+        // Add overlap for collecting keys
+        this.physics.add.overlap(my.sprite.playerContainer, this.keysGroup, this.collectKey, null, this);
+
+        // Heart icon and counter (replace text with image)
+        this.heartIcon = this.add.image(16, 20, 'heart_sprite')
+            .setOrigin(0, 0.5)
+            .setScrollFactor(0)
+            .setScale(0.7);
+
+        this.heartText = this.add.text(48, 16, '0', {
+            fontSize: '24px',
+            fill: '#fff',
+            fontFamily: 'Arial'
+        }).setScrollFactor(0);
+
+        // Key icon UI (hidden by default, anchored to top right of screen)
+        this.keyIcon = this.add.image(this.scale.width - 16, 16, 'key_sprite')
+            .setOrigin(1, 0)
+            .setScrollFactor(0)
+            .setVisible(false)
+            .setScale(0.8);
 
         cursors = this.input.keyboard.createCursorKeys();
 
@@ -125,6 +154,20 @@ class Platformer extends Phaser.Scene {
             // Log the current coordinates of the player sprite
             console.log(`Player position: x=${my.sprite.playerContainer.x}, y=${my.sprite.playerContainer.y}`);
         }, this);
+    }
+
+    collectHeart(player, heart) {
+        heart.disableBody(true, true);
+        this.heartCount += 1;
+        this.heartText.setText(this.heartCount);
+    }
+
+    collectKey(player, key) {
+        if (!this.hasKey) {
+            key.disableBody(true, true);
+            this.hasKey = true;
+            this.keyIcon.setVisible(true);
+        }
     }
 
     update() {
@@ -214,6 +257,12 @@ class Platformer extends Phaser.Scene {
             if(my.sprite.playerContainer.body.blocked.down && Phaser.Input.Keyboard.JustDown(cursors.up)) {
                 my.sprite.playerContainer.body.setVelocityY(this.JUMP_VELOCITY);
             }
+        }
+
+        // Keep key icon in the top right corner of the screen at all times
+        if (this.keyIcon) {
+            this.keyIcon.x = this.scale.width - 16;
+            this.keyIcon.y = 16;
         }
     }
 }

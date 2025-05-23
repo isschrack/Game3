@@ -21,8 +21,10 @@ class Load extends Phaser.Scene {
         this.load.image('pencil_sprite', 'kenney_scribble-platformer/PNG/Default/item_pencil.png');
         this.load.image('chest_sprite', 'kenney_scribble-platformer/PNG/Default/tile_chest.png');
 
-        // Particle effects
+        // Particle and Background effects
         this.load.image('smoke', '/PNG (Transparent)/smoke_03.png');
+        this.load.image('cloud_sprite1', '/kenney_scribble-platformer/PNG/Default/background_cloudB.png');
+        this.load.image('cloud_sprite2', '/kenney_scribble-platformer/PNG/Default/background_cloudA.png');
 
         // Load player body and hand images
         this.load.image('character_roundYellow', 'kenney_scribble-platformer/PNG/Default/character_roundYellow.png');

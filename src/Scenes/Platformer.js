@@ -38,9 +38,9 @@ class Platformer extends Phaser.Scene {
         this.keysGroup = this.physics.add.group();
         this.doorsGroup = this.physics.add.staticGroup();
         this.chestsGroup = this.physics.add.staticGroup();
-        // Initialize spikesGroup here as well, before the loop that populates it
-        this.spikesGroup = this.physics.add.staticGroup(); // Moved this up for clarity
+        this.spikesGroup = this.physics.add.staticGroup();
         this.wawaGroup = this.physics.add.staticGroup();
+        this.pencilGroup = this.physics.add.staticGroup(); // Add pencil group
 
         // Import the object layer "Objects"
         this.objectsLayer = this.map.getObjectLayer("Objects");
@@ -79,7 +79,13 @@ class Platformer extends Phaser.Scene {
                     this.spikesGroup.create(obj.x, obj.y, 'spike_sprite').setOrigin(0.5, 1);
                     break;
                 case "pencil":
-                    this.add.image(obj.x, obj.y, 'pencil_sprite').setOrigin(0, 1);
+                    // Add invisible pencil object for collision
+                    const pencil = this.pencilGroup.create(obj.x + (obj.width ? obj.width/2 : 0), obj.y - (obj.height ? obj.height/2 : 0), null);
+                    if(obj.width && obj.height) {
+                        pencil.body.setSize(obj.width, obj.height);
+                        pencil.body.setOffset(-obj.width/2 + 15, -obj.height/2 + 80);
+                    }
+                    pencil.setVisible(false);
                     break;
                 case "special_tree":
                     // Add special tree but make it invisible
@@ -172,6 +178,8 @@ class Platformer extends Phaser.Scene {
         // The spikesGroup is now populated in the first forEach loop.
         this.physics.add.overlap(my.sprite.playerContainer, this.spikesGroup, this.playerHitHazard, null, this);
         this.physics.add.overlap(my.sprite.playerContainer, this.wawaGroup, this.playerHitHazard, null, this);
+        // Add overlap for pencil game over
+        this.physics.add.overlap(my.sprite.playerContainer, this.pencilGroup, this.playerHitPencil, null, this);
 
         // Heart icon and counter (replace text with image)
         this.heartIcon = this.add.image(16, 20, 'heart_sprite')
@@ -191,6 +199,21 @@ class Platformer extends Phaser.Scene {
             .setScrollFactor(0)
             .setVisible(false)
             .setScale(0.8);
+
+        // Cloud group for parallax background
+        this.cloudGroup = this.add.group();
+        const cloudKeys = ['cloud_sprite1', 'cloud_sprite2'];
+        for (let i = 0; i < 8; i++) {
+            const x = Phaser.Math.Between(0, this.map.widthInPixels);
+            const y = Phaser.Math.Between(120, 200); // Lower max height for clouds
+            const key = cloudKeys[Phaser.Math.Between(0, cloudKeys.length - 1)];
+            const cloud = this.add.image(x, y, key)
+                .setScrollFactor(0.5)
+                .setDepth(-2)
+                .setAlpha(0.8);
+            cloud.speed = Phaser.Math.FloatBetween(0.2, 0.6);
+            this.cloudGroup.add(cloud);
+        }
 
         cursors = this.input.keyboard.createCursorKeys();
 
@@ -356,6 +379,15 @@ class Platformer extends Phaser.Scene {
             this.keyIcon.x = this.scale.width - 16;
             this.keyIcon.y = 16;
         }
+
+        // Update cloud positions for parallax effect
+        this.cloudGroup.getChildren().forEach(cloud => {
+            cloud.x += cloud.speed;
+            if (cloud.x > this.map.widthInPixels + 100) {
+                cloud.x = -100; // Reset to left side
+                cloud.y = Phaser.Math.Between(15, 7); // Lowest level is now y=12
+            }
+        });
     }
 
     playerHitWater(playerContainer) {
@@ -384,5 +416,11 @@ class Platformer extends Phaser.Scene {
             playerContainer.visible = true;
             playerContainer.body.enable = true;
         }, [], this);
+    }
+
+    playerHitPencil(playerContainer) {
+        // End the game immediately and pass heart count
+        this.scene.stop();
+        this.scene.start('gameOverScene', { heartCount: this.heartCount });
     }
 }

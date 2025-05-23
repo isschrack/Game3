@@ -33,9 +33,11 @@ class Platformer extends Phaser.Scene {
         // Add ladder layer
         this.ladderLayer = this.map.createLayer("ladder", this.tileset, 0, 0);
 
-        // Create groups for hearts and keys
+        // Create groups for hearts, keys, and doors/chests
         this.heartsGroup = this.physics.add.group();
         this.keysGroup = this.physics.add.group();
+        this.doorsGroup = this.physics.add.staticGroup();
+        this.chestsGroup = this.physics.add.staticGroup();
 
         // Import the object layer "Objects"
         this.objectsLayer = this.map.getObjectLayer("Objects");
@@ -49,13 +51,25 @@ class Platformer extends Phaser.Scene {
                     heart.body.setAllowGravity(false);
                     break;
                 case "key_1":
+                    // Add key_1 to group for collection
+                    const key1 = this.keysGroup.create(obj.x, obj.y, 'key_sprite').setOrigin(0, 1);
+                    key1.body.setAllowGravity(false);
+                    key1.keyType = "key_1";
+                    break;
                 case "tree_key":
-                    // Add key to group for collection
-                    const key = this.keysGroup.create(obj.x, obj.y, 'key_sprite').setOrigin(0, 1);
-                    key.body.setAllowGravity(false);
+                    // Add tree_key to group for collection, set depth low so it's behind tiles
+                    const treeKey = this.keysGroup.create(obj.x, obj.y, 'key_sprite').setOrigin(0, 1);
+                    treeKey.body.setAllowGravity(false);
+                    treeKey.keyType = "tree_key";
+                    treeKey.setDepth(-1); // Lower depth so it's behind tiles
                     break;
                 case "door_1":
-                    this.add.image(obj.x, obj.y, 'door_sprite').setOrigin(0, 1);
+                    // Add door to doors group for collision
+                    this.doorsGroup.create(obj.x, obj.y, 'door_sprite').setOrigin(0, 1);
+                    break;
+                case "chest":
+                    // Add chest to chests group for collision
+                    this.chestsGroup.create(obj.x, obj.y, 'chest_sprite').setOrigin(0, 1);
                     break;
                 case "spike":
                     this.add.image(obj.x, obj.y, 'spike_sprite').setOrigin(0, 1);
@@ -64,10 +78,8 @@ class Platformer extends Phaser.Scene {
                     this.add.image(obj.x, obj.y, 'pencil_sprite').setOrigin(0, 1);
                     break;
                 case "special_tree":
-                    this.add.image(obj.x, obj.y, 'special_tree_sprite').setOrigin(0, 1);
-                    break;
-                case "chest":
-                    this.add.image(obj.x, obj.y, 'chest_sprite').setOrigin(0, 1);
+                    // Add special tree but make it invisible
+                    this.add.image(obj.x, obj.y, 'special_tree_sprite').setOrigin(0, 1).setVisible(false);
                     break;
                 // Add more cases as needed for new object names
                 default:
@@ -126,6 +138,10 @@ class Platformer extends Phaser.Scene {
         this.physics.add.overlap(my.sprite.playerContainer, this.heartsGroup, this.collectHeart, null, this);
         // Add overlap for collecting keys
         this.physics.add.overlap(my.sprite.playerContainer, this.keysGroup, this.collectKey, null, this);
+        // Add collider for doors
+        this.physics.add.collider(my.sprite.playerContainer, this.doorsGroup, this.tryOpenDoor, null, this);
+        // Add collider for chests
+        this.physics.add.collider(my.sprite.playerContainer, this.chestsGroup, this.tryOpenChest, null, this);
 
         // Heart icon and counter (replace text with image)
         this.heartIcon = this.add.image(16, 20, 'heart_sprite')
@@ -167,7 +183,31 @@ class Platformer extends Phaser.Scene {
             key.disableBody(true, true);
             this.hasKey = true;
             this.keyIcon.setVisible(true);
+            this.keyType = key.keyType || "key_1";
         }
+    }
+
+    tryOpenDoor(player, door) {
+        if (this.hasKey && this.keyType === "key_1") {
+            door.disableBody(true, true); // Remove door so player can pass
+            this.hasKey = false;
+            this.keyIcon.setVisible(false);
+            this.keyType = null;
+        }
+        // If player doesn't have key, door remains solid
+    }
+
+    tryOpenChest(player, chest) {
+        if (this.hasKey && this.keyType === "tree_key") {
+            chest.disableBody(true, true); // Remove chest so player can pass/open
+            this.hasKey = false;
+            this.keyIcon.setVisible(false);
+            this.keyType = null;
+            // Increase heart counter by one when chest is opened
+            this.heartCount += 1;
+            this.heartText.setText(this.heartCount);
+        }
+        // If player doesn't have tree_key, chest remains solid
     }
 
     update() {

@@ -38,6 +38,9 @@ class Platformer extends Phaser.Scene {
         this.keysGroup = this.physics.add.group();
         this.doorsGroup = this.physics.add.staticGroup();
         this.chestsGroup = this.physics.add.staticGroup();
+        // Initialize spikesGroup here as well, before the loop that populates it
+        this.spikesGroup = this.physics.add.staticGroup(); // Moved this up for clarity
+        this.wawaGroup = this.physics.add.staticGroup();
 
         // Import the object layer "Objects"
         this.objectsLayer = this.map.getObjectLayer("Objects");
@@ -72,7 +75,8 @@ class Platformer extends Phaser.Scene {
                     this.chestsGroup.create(obj.x, obj.y, 'chest_sprite').setOrigin(0, 1);
                     break;
                 case "spike":
-                    this.add.image(obj.x, obj.y, 'spike_sprite').setOrigin(0, 1);
+                    // CORRECTED: Create spike directly in spikesGroup with bottom-center origin
+                    this.spikesGroup.create(obj.x, obj.y, 'spike_sprite').setOrigin(0.5, 1);
                     break;
                 case "pencil":
                     this.add.image(obj.x, obj.y, 'pencil_sprite').setOrigin(0, 1);
@@ -80,6 +84,22 @@ class Platformer extends Phaser.Scene {
                 case "special_tree":
                     // Add special tree but make it invisible
                     this.add.image(obj.x, obj.y, 'special_tree_sprite').setOrigin(0, 1).setVisible(false);
+                    break;
+                case "wawa":
+                    // Create an invisible rectangle for collision, centered on the Tiled object
+                    const wawa = this.wawaGroup.create(obj.x + obj.width / 2, obj.y - obj.height / 2, null);
+                    wawa.body.setSize(obj.width, obj.height);
+                    // Lower the hitbox by shifting the offset downward (increase Y offset)
+                    wawa.body.setOffset(-obj.width / 2, -obj.height / 2 + 60); // Increase 20 for more downward shift
+                    wawa.setVisible(false); // No image will show
+                    break;
+                case "spikes":
+                    // Create an invisible rectangle for collision, centered on the Tiled object
+                    const spikes = this.spikesGroup.create(obj.x + obj.width / 2, obj.y - obj.height / 2, null);
+                    spikes.body.setSize(obj.width, obj.height);
+                    // Lower the hitbox by shifting the offset downward (increase Y offset if needed)
+                    spikes.body.setOffset(-obj.width / 2, -obj.height / 2 + 60); // Match wawa's offset
+                    spikes.setVisible(false); // No image will show
                     break;
                 // Add more cases as needed for new object names
                 default:
@@ -90,7 +110,7 @@ class Platformer extends Phaser.Scene {
         });
 
         this.groundLayer.setCollisionByExclusion([-1]);
-        
+
         // set up player avatar using a container
         my.sprite.playerContainer = this.add.container(game.config.width/4, game.config.height/2);
 
@@ -117,7 +137,7 @@ class Platformer extends Phaser.Scene {
         // Optionally, offset the body so the feet align with the bottom of the container
         my.sprite.playerContainer.body.setOffset(
             -my.sprite.playerBody.width / 2,   // center the body horizontally
-            -my.sprite.playerBody.height       // align the bottom
+            -my.sprite.playerBody.height      // align the bottom
         );
 
         this.smokeGroup = this.add.group();
@@ -149,16 +169,9 @@ class Platformer extends Phaser.Scene {
         this.physics.add.overlap(my.sprite.playerContainer, this.waterLayer, this.playerHitWater, null, this);
 
         // Add overlap for spikes death (spike objects)
-        this.spikesGroup = this.physics.add.staticGroup();
-
-        this.objectsLayer.objects.forEach(obj => {
-            switch(obj.name) {
-                case "spike":
-                    this.spikesGroup.create(obj.x, obj.y, 'spike_sprite').setOrigin(0, 1);
-                    break;
-            }
-        });
+        // The spikesGroup is now populated in the first forEach loop.
         this.physics.add.overlap(my.sprite.playerContainer, this.spikesGroup, this.playerHitHazard, null, this);
+        this.physics.add.overlap(my.sprite.playerContainer, this.wawaGroup, this.playerHitHazard, null, this);
 
         // Heart icon and counter (replace text with image)
         this.heartIcon = this.add.image(16, 20, 'heart_sprite')

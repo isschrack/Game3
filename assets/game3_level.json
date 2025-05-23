@@ -153,14 +153,14 @@
                  "y":1029.33
                 }, 
                 {
-                 "height":18.6667,
+                 "height":52.0000333333335,
                  "id":20,
-                 "name":"spike",
+                 "name":"spikes",
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":816,
-                 "x":4297.33,
+                 "width":824,
+                 "x":4289.33,
                  "y":1240
                 }, 
                 {
@@ -221,6 +221,28 @@
                  "width":64,
                  "x":1758.67,
                  "y":1220
+                }, 
+                {
+                 "height":49.3333333333333,
+                 "id":29,
+                 "name":"wawa",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":1334.66666666667,
+                 "x":2248,
+                 "y":1228
+                }, 
+                {
+                 "height":53.3333333333333,
+                 "id":30,
+                 "name":"wawa",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":437.333333333333,
+                 "x":1097.33333333333,
+                 "y":1224
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -353,7 +375,7 @@
          "y":0
         }],
  "nextlayerid":7,
- "nextobjectid":29,
+ "nextobjectid":32,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",

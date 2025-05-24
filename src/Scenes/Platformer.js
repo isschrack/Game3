@@ -41,6 +41,7 @@ class Platformer extends Phaser.Scene {
         this.spikesGroup = this.physics.add.staticGroup();
         this.wawaGroup = this.physics.add.staticGroup();
         this.pencilGroup = this.physics.add.staticGroup(); // Add pencil group
+        this.checkpointGroup = this.physics.add.staticGroup(); // Add checkpoint group
 
         // Import the object layer "Objects"
         this.objectsLayer = this.map.getObjectLayer("Objects");
@@ -107,7 +108,10 @@ class Platformer extends Phaser.Scene {
                     spikes.body.setOffset(-obj.width / 2, -obj.height / 2 + 60); // Match wawa's offset
                     spikes.setVisible(false); // No image will show
                     break;
-                // Add more cases as needed for new object names
+                case "checkpoint":
+                    const checkpoint = this.checkpointGroup.create(obj.x, obj.y, null);
+                    checkpoint.setVisible(false);
+                    break;
                 default:
                     // Optionally add a placeholder or skip
                     // this.add.image(obj.x, obj.y, 'placeholder_sprite').setOrigin(0, 1);
@@ -170,16 +174,29 @@ class Platformer extends Phaser.Scene {
         this.physics.add.collider(my.sprite.playerContainer, this.doorsGroup, this.tryOpenDoor, null, this);
         // Add collider for chests
         this.physics.add.collider(my.sprite.playerContainer, this.chestsGroup, this.tryOpenChest, null, this);
-
         // Add overlap for water death
         this.physics.add.overlap(my.sprite.playerContainer, this.waterLayer, this.playerHitWater, null, this);
-
         // Add overlap for spikes death (spike objects)
         // The spikesGroup is now populated in the first forEach loop.
         this.physics.add.overlap(my.sprite.playerContainer, this.spikesGroup, this.playerHitHazard, null, this);
         this.physics.add.overlap(my.sprite.playerContainer, this.wawaGroup, this.playerHitHazard, null, this);
         // Add overlap for pencil game over
         this.physics.add.overlap(my.sprite.playerContainer, this.pencilGroup, this.playerHitPencil, null, this);
+        // Add overlap for checkpoints
+        this.physics.add.overlap(my.sprite.playerContainer, this.checkpointGroup, this.reachCheckpoint, null, this);
+
+        // Key collection particle emitter
+        this.keyEmitter = this.add.particles({
+            texture: 'key_particle', // The frame or texture key for your particle
+            x: 0,
+            y: 0,
+            speed: { min: -100, max: 100 },
+            angle: { min: 0, max: 360 },
+            lifespan: 400,
+            quantity: 10,
+            scale: { start: 0.5, end: 0 },
+            emitting: false // Only emit when triggered
+        });
 
         // Heart icon and counter (replace text with image)
         this.heartIcon = this.add.image(16, 20, 'heart_sprite')
@@ -223,6 +240,16 @@ class Platformer extends Phaser.Scene {
             // Log the current coordinates of the player sprite
             console.log(`Player position: x=${my.sprite.playerContainer.x}, y=${my.sprite.playerContainer.y}`);
         }, this);
+
+        this.walkSounds = [
+            this.sound.add('walk', { loop: true, volume: 0.4 }),
+            this.sound.add('walk_other', { loop: true, volume: 0.4 })
+        ];
+        this.currentWalkSound = 0;
+
+        this.sound.add('jump', { volume: 0.5 });
+        this.lastOnGround = false; // Track if player was last on ground
+        this.checkpoint = { x: null, y: null }; // Track last checkpoint position
     }
 
     collectHeart(player, heart) {
@@ -233,6 +260,7 @@ class Platformer extends Phaser.Scene {
 
     collectKey(player, key) {
         if (!this.hasKey) {
+            this.keyEmitter.emitParticleAt(key.x, key.y, 15);
             key.disableBody(true, true);
             this.hasKey = true;
             this.keyIcon.setVisible(true);
@@ -261,6 +289,10 @@ class Platformer extends Phaser.Scene {
             this.heartText.setText(this.heartCount);
         }
         // If player doesn't have tree_key, chest remains solid
+    }
+
+    reachCheckpoint(player, checkpoint) {
+        this.checkpoint = { x: checkpoint.x, y: checkpoint.y };
     }
 
     update() {
@@ -388,6 +420,20 @@ class Platformer extends Phaser.Scene {
                 cloud.y = Phaser.Math.Between(15, 7); // Lowest level is now y=12
             }
         });
+
+        if (isRunning && my.sprite.playerContainer.body.blocked.down) {
+            if (!this.walkSounds[this.currentWalkSound].isPlaying) {
+                // Stop both to prevent overlap
+                this.walkSounds[0].stop();
+                this.walkSounds[1].stop();
+                // Alternate sound
+                this.currentWalkSound = 1 - this.currentWalkSound;
+                this.walkSounds[this.currentWalkSound].play();
+            }
+        } else {
+            this.walkSounds[0].stop();
+            this.walkSounds[1].stop();
+        }
     }
 
     playerHitWater(playerContainer) {

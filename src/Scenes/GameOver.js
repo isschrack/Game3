@@ -8,6 +8,18 @@ class GameOver extends Phaser.Scene {
     }
 
     create() {
+        // Stop walk sound effects if they are playing
+        if (this.sound.get('walk')) {
+            this.sound.get('walk').stop();
+        }
+        if (this.sound.get('walk_other')) {
+            this.sound.get('walk_other').stop();
+        }
+
+        // Play heart sound effect in a loop until leaving the scene
+        this.heartLoop = this.sound.add('heart', { loop: true, volume: 0.35 });
+        this.heartLoop.play();
+
         // Centered "YOU DID IT!" text
         this.add.text(this.scale.width / 2, this.scale.height / 2 - 40, "YOU DID IT!", {
             fontSize: '48px',
@@ -36,5 +48,14 @@ class GameOver extends Phaser.Scene {
         this.input.keyboard.once('keydown-SPACE', () => {
             this.scene.start('platformerScene');
         });
+
+        // Stop heart sound when scene is shutdown
+        this.events.on('shutdown', this.shutdown, this);
+    }
+
+    shutdown() {
+        if (this.heartLoop && this.heartLoop.isPlaying) {
+            this.heartLoop.stop();
+        }
     }
 }

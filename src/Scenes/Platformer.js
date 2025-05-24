@@ -179,11 +179,11 @@ class Platformer extends Phaser.Scene {
         // Add overlap for spikes death (spike objects)
         // The spikesGroup is now populated in the first forEach loop.
         this.physics.add.overlap(my.sprite.playerContainer, this.spikesGroup, this.playerHitHazard, null, this);
-        this.physics.add.overlap(my.sprite.playerContainer, this.wawaGroup, this.playerHitHazard, null, this);
+        this.physics.add.overlap(my.sprite.playerContainer, this.wawaGroup, (player, wawa) => this.playerHitHazard(player, wawa, true), null, this);
         // Add overlap for pencil game over
         this.physics.add.overlap(my.sprite.playerContainer, this.pencilGroup, this.playerHitPencil, null, this);
         // Add overlap for checkpoints
-        this.physics.add.overlap(my.sprite.playerContainer, this.checkpointGroup, this.reachCheckpoint, null, this);
+        // this.physics.add.overlap(my.sprite.playerContainer, this.checkpointGroup, this.reachCheckpoint, null, this);
 
         // Key collection particle emitter
         this.keyEmitter = this.add.particles({
@@ -247,15 +247,18 @@ class Platformer extends Phaser.Scene {
         ];
         this.currentWalkSound = 0;
 
-        this.sound.add('jump', { volume: 0.5 });
-        this.lastOnGround = false; // Track if player was last on ground
-        this.checkpoint = { x: null, y: null }; // Track last checkpoint position
+        //this.sound.add('jump', { volume: 0.5 });
+        //this.sound.add('door', { volume: 0.5 });
+
+        //this.lastOnGround = false; // Track if player was last on ground
+        //this.checkpoint = { x: null, y: null }; // Track last checkpoint position
     }
 
     collectHeart(player, heart) {
         heart.disableBody(true, true);
         this.heartCount += 1;
         this.heartText.setText(this.heartCount);
+        this.sound.play('heart', { rate: 3, seek: 0.1, volume: 0.3 }); // Lower volume
     }
 
     collectKey(player, key) {
@@ -265,6 +268,7 @@ class Platformer extends Phaser.Scene {
             this.hasKey = true;
             this.keyIcon.setVisible(true);
             this.keyType = key.keyType || "key_1";
+            this.sound.play('key', {seek: 0.5}); // Play key sound effect
         }
     }
 
@@ -274,6 +278,7 @@ class Platformer extends Phaser.Scene {
             this.hasKey = false;
             this.keyIcon.setVisible(false);
             this.keyType = null;
+            this.sound.play('door'); // Play door sound effect when unlocking
         }
         // If player doesn't have key, door remains solid
     }
@@ -287,13 +292,15 @@ class Platformer extends Phaser.Scene {
             // Increase heart counter by one when chest is opened
             this.heartCount += 1;
             this.heartText.setText(this.heartCount);
+            this.sound.play('heart', { rate: 3, seek: 0.1, volume: 0.3 }); // Lower volume
+            this.sound.play('chest'); // Play chest sound effect
         }
         // If player doesn't have tree_key, chest remains solid
     }
 
-    reachCheckpoint(player, checkpoint) {
-        this.checkpoint = { x: checkpoint.x, y: checkpoint.y };
-    }
+    // reachCheckpoint(player, checkpoint) {
+    //     this.checkpoint = { x: checkpoint.x, y: checkpoint.y };
+    // }
 
     update() {
         // Left/right movement
@@ -438,15 +445,21 @@ class Platformer extends Phaser.Scene {
 
     playerHitWater(playerContainer) {
         // Reset player to last checkpoint
-        if (this.checkpoint && this.checkpoint.x !== null && this.checkpoint.y !== null) {
-            playerContainer.x = this.checkpoint.x;
-            playerContainer.y = this.checkpoint.y;
-            playerContainer.body.setVelocity(0, 0);
-        }
+        // if (this.checkpoint && this.checkpoint.x !== null && this.checkpoint.y !== null) {
+        //     playerContainer.x = this.checkpoint.x;
+        //     playerContainer.y = this.checkpoint.y;
+        //     playerContainer.body.setVelocity(0, 0);
+        // }
     }
 
-    playerHitHazard(playerContainer) {
+    playerHitHazard(playerContainer, hazard, isWawa = false) {
         // Optional: Play a death animation or sound here
+
+        if (isWawa) {
+            this.sound.play('water', { rate: 3 }); // Play water sound faster
+        } else {
+            this.sound.play('spike');
+        }
 
         // Hide the player briefly to simulate "death"
         playerContainer.visible = false;

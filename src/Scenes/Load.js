@@ -34,7 +34,14 @@ class Load extends Phaser.Scene {
         // Sound effects
         this.load.setPath("./assets/Audio/");
         this.load.audio('walk', 'footstep_wood_003.ogg');
-        this.load.audio('walk_other', 'footstep_wood_004.ogg');    }
+        this.load.audio('walk_other', 'footstep_wood_004.ogg');
+        this.load.audio('door', 'door-1-open.wav');
+        this.load.audio('heart', 'yippee.mp3');
+        this.load.audio('key', 'key_jangle.mp3'); 
+        this.load.audio('chest', 'chest-open.mp3');
+        this.load.audio('spike', 'oof.mp3');
+        this.load.audio('water', 'water-splash.mp3');
+    }
 
     create() {
          this.scene.start("platformerScene");
